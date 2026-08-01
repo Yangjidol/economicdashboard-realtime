@@ -17,6 +17,10 @@
     padding:24px;}
   .wrap{max-width:1200px;margin:0 auto;}
   h1{font-size:20px;margin:0 0 16px;}
+  nav{display:flex;gap:4px;margin-bottom:16px;}
+  nav a{padding:8px 16px;border-radius:4px;text-decoration:none;font-size:13px;color:var(--text-dim);}
+  nav a.active{background:var(--card);color:var(--gold);font-weight:600;}
+  nav a:hover{color:var(--text);}
   .chart-box{background:var(--card);border:1px solid var(--line);border-radius:8px;
     padding:16px;margin-bottom:20px;height:380px;}
   .empty-msg{color:var(--text-dim);font-size:13px;text-align:center;padding-top:150px;}
@@ -45,6 +49,10 @@
 </head>
 <body>
 <div class="wrap">
+  <nav>
+    <a href="index.html">대시보드</a>
+    <a href="compare.html" class="active">비교 차트</a>
+  </nav>
   <h1>지표 비교 차트</h1>
 
   <div class="chart-box">
