@@ -9,79 +9,65 @@
     --bg:#0B1220; --card:#16223A; --line:#233252;
     --gold:#D4A24C; --gold-dim:#8C6E33;
     --text:#EDEFF4; --text-dim:#9AA5BD;
-    --up:#5CC98F; --down:#E2685F; --err:#E2685F;
+    --err:#E2685F;
   }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);color:var(--text);
     font-family:"Malgun Gothic","맑은 고딕",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;}
-  .wrap{max-width:960px;margin:0 auto;padding:32px 20px 60px;}
+  .wrap{max-width:1000px;margin:0 auto;padding:32px 20px 60px;}
   header{display:flex;justify-content:space-between;align-items:flex-end;
-    border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:24px;}
+    border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
   header h1{font-size:22px;margin:0 0 4px;}
   header p{margin:0;color:var(--text-dim);font-size:13px;}
   #status{font-size:12px;color:var(--gold);}
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:28px;}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:14px 16px;}
-  .card-name{font-size:13px;color:var(--text-dim);margin-bottom:6px;}
-  .card-value{font-size:22px;font-weight:600;}
-  .card-value.err{font-size:13px;color:var(--err);font-weight:400;}
-  .card-date{font-size:11px;color:var(--text-dim);margin-top:4px;}
+  .actions{display:flex;gap:8px;align-items:center;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:28px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:12px 14px;}
+  .card.unavailable{opacity:0.5;}
+  .card-name{font-size:12.5px;color:var(--text-dim);margin-bottom:6px;}
+  .card-value{font-size:19px;font-weight:600;}
+  .card-value.err{font-size:12px;color:var(--err);font-weight:400;}
+  .card-date{font-size:10.5px;color:var(--text-dim);margin-top:4px;}
   .sec-title{font-size:15px;font-weight:600;margin:0 0 12px;color:var(--gold);}
-  button{background:var(--gold);border:none;color:#1a1305;font-weight:600;
-    padding:8px 16px;border-radius:4px;cursor:pointer;font-size:13px;}
-  button:hover{opacity:0.9;}
+  button, a.btn{background:var(--gold);border:none;color:#1a1305;font-weight:600;
+    padding:8px 16px;border-radius:4px;cursor:pointer;font-size:13px;text-decoration:none;display:inline-block;}
+  button:hover, a.btn:hover{opacity:0.9;}
   button:disabled{opacity:0.5;cursor:default;}
+  button.ghost{background:transparent;border:1px solid var(--gold-dim);color:var(--gold);}
+  nav{display:flex;gap:4px;margin-bottom:16px;}
+  nav a{padding:8px 16px;border-radius:4px;text-decoration:none;font-size:13px;color:var(--text-dim);}
+  nav a.active{background:var(--card);color:var(--gold);font-weight:600;}
+  nav a:hover{color:var(--text);}
 </style>
 </head>
 <body>
 <div class="wrap">
+  <nav>
+    <a href="index.html" class="active">대시보드</a>
+    <a href="compare.html">비교 차트</a>
+  </nav>
   <header>
     <div>
       <h1>경제지표 실시간 대시보드</h1>
       <p>서버(Vercel)를 통해 API를 호출하므로 API 키는 노출되지 않습니다</p>
     </div>
-    <div>
-      <div id="status">불러오는 중...</div>
-      <button id="refreshBtn" onclick="loadAll()">새로고침</button>
+    <div class="actions">
+      <div>
+        <div id="status">불러오는 중...</div>
+        <button id="refreshBtn" onclick="loadAll()">새로고침</button>
+      </div>
     </div>
   </header>
 
-  <div class="sec-title">미국 경제지표</div>
-  <div class="grid" id="us-grid">
-    <div class="card"><div class="card-name">CPI (소비자물가지수)</div><div class="card-value" id="us-cpi">-</div><div class="card-date" id="us-cpi-date"></div></div>
-    <div class="card"><div class="card-name">PCE 물가지수</div><div class="card-value" id="us-pce">-</div><div class="card-date" id="us-pce-date"></div></div>
-    <div class="card"><div class="card-name">실업률</div><div class="card-value" id="us-unemployment">-</div><div class="card-date" id="us-unemployment-date"></div></div>
-    <div class="card"><div class="card-name">국채 10년물 금리</div><div class="card-value" id="us-treasury10y">-</div><div class="card-date" id="us-treasury10y-date"></div></div>
-    <div class="card"><div class="card-name">실질 GDP</div><div class="card-value" id="us-gdp">-</div><div class="card-date" id="us-gdp-date"></div></div>
-    <div class="card"><div class="card-name">VIX (변동성지수)</div><div class="card-value" id="us-vix">-</div><div class="card-date" id="us-vix-date"></div></div>
-  </div>
+  <div id="categories"></div>
 
-  <div class="sec-title">한국 지표</div>
+  <div class="sec-title">한국 지표 (별도 소스)</div>
   <div class="grid" id="kr-grid">
-    <div class="card"><div class="card-name">한국 기준금리</div><div class="card-value" id="kr-rate">-</div><div class="card-date" id="kr-rate-date"></div></div>
-    <div class="card"><div class="card-name">원/달러 환율</div><div class="card-value" id="fx-usdkrw">-</div><div class="card-date" id="fx-usdkrw-date"></div></div>
-  </div>
-
-  <div class="sec-title">원자재 / 달러지수</div>
-  <div class="grid" id="market-grid">
-    <div class="card"><div class="card-name">달러지수 (FRED, 무역가중)</div><div class="card-value" id="us-dollarIndex">-</div><div class="card-date" id="us-dollarIndex-date"></div></div>
-    <div class="card"><div class="card-name">WTI 유가</div><div class="card-value" id="us-wti">-</div><div class="card-date" id="us-wti-date"></div></div>
+    <div class="card"><div class="card-name">한국 기준금리 (한국은행 ECOS)</div><div class="card-value" id="kr-rate">-</div><div class="card-date" id="kr-rate-date"></div></div>
   </div>
 </div>
 
 <script>
-function setCard(id, valueText, dateText, isError) {
-  const el = document.getElementById(id);
-  const dateEl = document.getElementById(id + '-date');
-  if (el) {
-    el.textContent = valueText;
-    el.className = isError ? 'card-value err' : 'card-value';
-  }
-  if (dateEl) {
-    dateEl.textContent = dateText || '';
-  }
-}
-
 function fmt(value) {
   const n = Number(value);
   if (isNaN(n)) return value;
@@ -97,38 +83,84 @@ async function fetchJson(url) {
   }
 }
 
+function renderCategories(meta, results) {
+  const container = document.getElementById('categories');
+  container.innerHTML = '';
+  const categories = [...new Set(meta.map(m => m.category))];
+
+  categories.forEach(cat => {
+    const items = meta.filter(m => m.category === cat);
+    const secTitle = document.createElement('div');
+    secTitle.className = 'sec-title';
+    secTitle.textContent = cat;
+    container.appendChild(secTitle);
+
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+
+    items.forEach(m => {
+      const d = results[m.id];
+      const card = document.createElement('div');
+      card.className = 'card' + (!m.available ? ' unavailable' : '');
+
+      const name = document.createElement('div');
+      name.className = 'card-name';
+      name.textContent = m.label;
+      card.appendChild(name);
+
+      const value = document.createElement('div');
+      if (!d || d.error) {
+        value.className = 'card-value err';
+        value.textContent = d?.error || '조회 실패';
+      } else {
+        value.className = 'card-value';
+        value.textContent = fmt(d.value) + (m.unit ? m.unit : '');
+      }
+      card.appendChild(value);
+
+      if (d && !d.error) {
+        const date = document.createElement('div');
+        date.className = 'card-date';
+        date.textContent = '기준일: ' + d.date;
+        card.appendChild(date);
+      }
+
+      grid.appendChild(card);
+    });
+
+    container.appendChild(grid);
+  });
+}
+
 async function loadAll() {
   const btn = document.getElementById('refreshBtn');
   btn.disabled = true;
   document.getElementById('status').textContent = '불러오는 중...';
 
-  const [us, kr, fx] = await Promise.all([
-    fetchJson('/api/us-indicators'),
-    fetchJson('/api/kr-rate'),
-    fetchJson('/api/fx')
+  const [latest, kr] = await Promise.all([
+    fetchJson('/api/latest'),
+    fetchJson('/api/kr-rate')
   ]);
 
-  // 미국 지표
-  ['cpi','pce','unemployment','treasury10y','gdp','vix','wti','dollarIndex'].forEach(k => {
-    const d = us[k];
-    if (!d || d.error) setCard('us-' + k, d?.error || '조회 실패', '', true);
-    else setCard('us-' + k, fmt(d.value), '기준일: ' + d.date, false);
-  });
+  if (latest.meta) {
+    renderCategories(latest.meta, latest.results);
+  }
 
-  // 한국 기준금리
-  if (kr.error || !kr.baseRate) setCard('kr-rate', kr.error || '조회 실패', '', true);
-  else setCard('kr-rate', fmt(kr.baseRate.value) + '%', '기준월: ' + kr.baseRate.date, false);
-
-  // 환율
-  if (fx.error || !fx.usdkrw) setCard('fx-usdkrw', fx.error || '조회 실패', '', true);
-  else setCard('fx-usdkrw', fmt(fx.usdkrw) + '원', '갱신: ' + fx.updated, false);
+  if (kr.error || !kr.baseRate) {
+    document.getElementById('kr-rate').textContent = kr.error || '조회 실패';
+    document.getElementById('kr-rate').className = 'card-value err';
+  } else {
+    document.getElementById('kr-rate').textContent = fmt(kr.baseRate.value) + '%';
+    document.getElementById('kr-rate').className = 'card-value';
+    document.getElementById('kr-rate-date').textContent = '기준월: ' + kr.baseRate.date;
+  }
 
   document.getElementById('status').textContent = '마지막 갱신: ' + new Date().toLocaleTimeString('ko-KR');
   btn.disabled = false;
 }
 
 loadAll();
-setInterval(loadAll, 15 * 60 * 1000); // 15분마다 자동 갱신
+setInterval(loadAll, 15 * 60 * 1000);
 </script>
 </body>
 </html>
