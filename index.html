@@ -13,19 +13,19 @@
   }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);color:var(--text);
-    font-family:-apple-system,BlinkMacSystemFont,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;}
+    font-family:"Malgun Gothic","맑은 고딕",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;}
   .wrap{max-width:960px;margin:0 auto;padding:32px 20px 60px;}
   header{display:flex;justify-content:space-between;align-items:flex-end;
     border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:24px;}
   header h1{font-size:22px;margin:0 0 4px;}
   header p{margin:0;color:var(--text-dim);font-size:13px;}
-  #status{font-size:12px;color:var(--gold);font-family:monospace;}
+  #status{font-size:12px;color:var(--gold);}
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:28px;}
   .card{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:14px 16px;}
   .card-name{font-size:13px;color:var(--text-dim);margin-bottom:6px;}
-  .card-value{font-size:22px;font-weight:600;font-family:monospace;}
-  .card-value.err{font-size:13px;color:var(--err);font-weight:400;font-family:inherit;}
-  .card-meta{font-size:11px;color:var(--text-dim);margin-top:6px;}
+  .card-value{font-size:22px;font-weight:600;}
+  .card-value.err{font-size:13px;color:var(--err);font-weight:400;}
+  .card-date{font-size:11px;color:var(--text-dim);margin-top:4px;}
   .sec-title{font-size:15px;font-weight:600;margin:0 0 12px;color:var(--gold);}
   button{background:var(--gold);border:none;color:#1a1305;font-weight:600;
     padding:8px 16px;border-radius:4px;cursor:pointer;font-size:13px;}
@@ -48,33 +48,44 @@
 
   <div class="sec-title">미국 경제지표</div>
   <div class="grid" id="us-grid">
-    <div class="card"><div class="card-name">CPI (소비자물가지수)</div><div class="card-value" id="us-cpi">-</div></div>
-    <div class="card"><div class="card-name">PCE 물가지수</div><div class="card-value" id="us-pce">-</div></div>
-    <div class="card"><div class="card-name">실업률</div><div class="card-value" id="us-unemployment">-</div></div>
-    <div class="card"><div class="card-name">국채 10년물 금리</div><div class="card-value" id="us-treasury10y">-</div></div>
-    <div class="card"><div class="card-name">실질 GDP</div><div class="card-value" id="us-gdp">-</div></div>
-    <div class="card"><div class="card-name">VIX (변동성지수)</div><div class="card-value" id="us-vix">-</div></div>
+    <div class="card"><div class="card-name">CPI (소비자물가지수)</div><div class="card-value" id="us-cpi">-</div><div class="card-date" id="us-cpi-date"></div></div>
+    <div class="card"><div class="card-name">PCE 물가지수</div><div class="card-value" id="us-pce">-</div><div class="card-date" id="us-pce-date"></div></div>
+    <div class="card"><div class="card-name">실업률</div><div class="card-value" id="us-unemployment">-</div><div class="card-date" id="us-unemployment-date"></div></div>
+    <div class="card"><div class="card-name">국채 10년물 금리</div><div class="card-value" id="us-treasury10y">-</div><div class="card-date" id="us-treasury10y-date"></div></div>
+    <div class="card"><div class="card-name">실질 GDP</div><div class="card-value" id="us-gdp">-</div><div class="card-date" id="us-gdp-date"></div></div>
+    <div class="card"><div class="card-name">VIX (변동성지수)</div><div class="card-value" id="us-vix">-</div><div class="card-date" id="us-vix-date"></div></div>
   </div>
 
   <div class="sec-title">한국 지표</div>
   <div class="grid" id="kr-grid">
-    <div class="card"><div class="card-name">한국 기준금리</div><div class="card-value" id="kr-rate">-</div></div>
-    <div class="card"><div class="card-name">원/달러 환율</div><div class="card-value" id="fx-usdkrw">-</div></div>
+    <div class="card"><div class="card-name">한국 기준금리</div><div class="card-value" id="kr-rate">-</div><div class="card-date" id="kr-rate-date"></div></div>
+    <div class="card"><div class="card-name">원/달러 환율</div><div class="card-value" id="fx-usdkrw">-</div><div class="card-date" id="fx-usdkrw-date"></div></div>
   </div>
 
   <div class="sec-title">원자재 / 달러지수</div>
   <div class="grid" id="market-grid">
-    <div class="card"><div class="card-name">달러지수 (FRED, 무역가중)</div><div class="card-value" id="us-dollarIndex">-</div></div>
-    <div class="card"><div class="card-name">WTI 유가</div><div class="card-value" id="us-wti">-</div></div>
+    <div class="card"><div class="card-name">달러지수 (FRED, 무역가중)</div><div class="card-value" id="us-dollarIndex">-</div><div class="card-date" id="us-dollarIndex-date"></div></div>
+    <div class="card"><div class="card-name">WTI 유가</div><div class="card-value" id="us-wti">-</div><div class="card-date" id="us-wti-date"></div></div>
   </div>
 </div>
 
 <script>
-function setCard(id, text, isError) {
+function setCard(id, valueText, dateText, isError) {
   const el = document.getElementById(id);
-  if (!el) return;
-  el.textContent = text;
-  el.className = isError ? 'card-value err' : 'card-value';
+  const dateEl = document.getElementById(id + '-date');
+  if (el) {
+    el.textContent = valueText;
+    el.className = isError ? 'card-value err' : 'card-value';
+  }
+  if (dateEl) {
+    dateEl.textContent = dateText || '';
+  }
+}
+
+function fmt(value) {
+  const n = Number(value);
+  if (isNaN(n)) return value;
+  return n.toFixed(2);
 }
 
 async function fetchJson(url) {
@@ -100,17 +111,17 @@ async function loadAll() {
   // 미국 지표
   ['cpi','pce','unemployment','treasury10y','gdp','vix','wti','dollarIndex'].forEach(k => {
     const d = us[k];
-    if (!d || d.error) setCard('us-' + k, d?.error || '조회 실패', true);
-    else setCard('us-' + k, d.value + ' (' + d.date + ')', false);
+    if (!d || d.error) setCard('us-' + k, d?.error || '조회 실패', '', true);
+    else setCard('us-' + k, fmt(d.value), '기준일: ' + d.date, false);
   });
 
   // 한국 기준금리
-  if (kr.error || !kr.baseRate) setCard('kr-rate', kr.error || '조회 실패', true);
-  else setCard('kr-rate', kr.baseRate.value + '% (' + kr.baseRate.date + ')', false);
+  if (kr.error || !kr.baseRate) setCard('kr-rate', kr.error || '조회 실패', '', true);
+  else setCard('kr-rate', fmt(kr.baseRate.value) + '%', '기준월: ' + kr.baseRate.date, false);
 
   // 환율
-  if (fx.error || !fx.usdkrw) setCard('fx-usdkrw', fx.error || '조회 실패', true);
-  else setCard('fx-usdkrw', Number(fx.usdkrw).toFixed(2) + '원', false);
+  if (fx.error || !fx.usdkrw) setCard('fx-usdkrw', fx.error || '조회 실패', '', true);
+  else setCard('fx-usdkrw', fmt(fx.usdkrw) + '원', '갱신: ' + fx.updated, false);
 
   document.getElementById('status').textContent = '마지막 갱신: ' + new Date().toLocaleTimeString('ko-KR');
   btn.disabled = false;
