@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>지표 비교 차트</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#0B1220; --card:#16223A; --line:#233252;
+    --gold:#D4A24C; --gold-dim:#8C6E33; --teal:#3AA1A1;
+    --text:#EDEFF4; --text-dim:#9AA5BD;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:"Malgun Gothic","맑은 고딕",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;
+    padding:24px;}
+  .wrap{max-width:1200px;margin:0 auto;}
+  h1{font-size:20px;margin:0 0 16px;}
+  .chart-box{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:16px;margin-bottom:20px;height:380px;}
+  .empty-msg{color:var(--text-dim);font-size:13px;text-align:center;padding-top:150px;}
+  .ranges{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+  .ranges button{background:var(--card);border:1px solid var(--line);color:var(--text-dim);
+    padding:6px 14px;border-radius:4px;cursor:pointer;font-size:13px;}
+  .ranges button.active{background:var(--gold);color:#1a1305;border-color:var(--gold);font-weight:600;}
+  .selection-info{font-size:13px;color:var(--text-dim);margin-bottom:16px;}
+  .selection-info .tag1{color:var(--gold);font-weight:600;}
+  .selection-info .tag2{color:var(--teal);font-weight:600;}
+  .categories{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;}
+  .cat-col{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px;}
+  .cat-title{font-size:13px;font-weight:600;color:var(--gold);margin-bottom:10px;}
+  .item-btn{display:flex;align-items:center;gap:8px;width:100%;background:transparent;
+    border:1px solid var(--line);color:var(--text);padding:8px 10px;border-radius:4px;
+    cursor:pointer;font-size:12.5px;margin-bottom:6px;text-align:left;font-family:inherit;}
+  .item-btn:hover{border-color:var(--gold-dim);}
+  .item-btn.disabled{opacity:0.35;cursor:not-allowed;}
+  .item-btn.sel1{border-color:var(--gold);background:rgba(212,162,76,0.12);}
+  .item-btn.sel2{border-color:var(--teal);background:rgba(58,161,161,0.12);}
+  .icon{width:16px;height:16px;border-radius:50%;border:1px solid var(--text-dim);flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text-dim);}
+  .item-btn.sel1 .icon{border-color:var(--gold);color:var(--gold);}
+  .item-btn.sel2 .icon{border-color:var(--teal);color:var(--teal);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>지표 비교 차트</h1>
+
+  <div class="chart-box">
+    <canvas id="chart"></canvas>
+  </div>
+
+  <div class="ranges" id="ranges">
+    <button data-range="1m">1개월</button>
+    <button data-range="3m">3개월</button>
+    <button data-range="1y" class="active">1년</button>
+    <button data-range="3y">3년</button>
+    <button data-range="5y">5년</button>
+    <button data-range="10y">10년</button>
+  </div>
+
+  <div class="selection-info" id="selInfo">지표를 2개 선택하세요. 먼저 선택한 항목은 <span class="tag1">주축(왼쪽)</span>, 나중에 선택한 항목은 <span class="tag2">보조축(오른쪽)</span>으로 자동 지정됩니다.</div>
+
+  <div class="categories" id="categories"></div>
+</div>
+
+<script>
+let meta = [];
+let selected = []; // 최대 2개, 순서 = 선택 순서
+let currentRange = '1y';
+let chart = null;
+
+async function fetchJson(url) {
+  try {
+    const r = await fetch(url);
+    return await r.json();
+  } catch (e) {
+    return { error: '네트워크 오류' };
+  }
+}
+
+function renderCategories() {
+  const container = document.getElementById('categories');
+  container.innerHTML = '';
+  const categories = [...new Set(meta.map(m => m.category))];
+
+  categories.forEach(cat => {
+    const col = document.createElement('div');
+    col.className = 'cat-col';
+
+    const title = document.createElement('div');
+    title.className = 'cat-title';
+    title.textContent = cat;
+    col.appendChild(title);
+
+    meta.filter(m => m.category === cat).forEach(m => {
+      const btn = document.createElement('button');
+      const idx = selected.indexOf(m.id);
+      let cls = 'item-btn';
+      if (!m.available) cls += ' disabled';
+      if (idx === 0) cls += ' sel1';
+      if (idx === 1) cls += ' sel2';
+      btn.className = cls;
+      btn.disabled = !m.available;
+
+      const icon = document.createElement('span');
+      icon.className = 'icon';
+      icon.textContent = idx === 0 ? '1' : (idx === 1 ? '2' : '');
+      btn.appendChild(icon);
+
+      const label = document.createElement('span');
+      label.textContent = m.label;
+      btn.appendChild(label);
+
+      btn.onclick = () => toggleSelect(m.id);
+      col.appendChild(btn);
+    });
+
+    container.appendChild(col);
+  });
+}
+
+function toggleSelect(id) {
+  const idx = selected.indexOf(id);
+  if (idx !== -1) {
+    selected.splice(idx, 1); // 이미 선택된 항목 클릭 -> 선택 해제
+  } else {
+    selected.push(id);
+    if (selected.length > 2) selected.shift(); // 3번째 선택 시 가장 오래된 것 제거
+  }
+  renderCategories();
+  loadChart();
+}
+
+function rangeLabel(id) {
+  const item = document.querySelectorAll('#ranges button');
+  item.forEach(b => b.classList.toggle('active', b.dataset.range === id));
+}
+
+document.getElementById('ranges').addEventListener('click', (e) => {
+  if (e.target.dataset.range) {
+    currentRange = e.target.dataset.range;
+    rangeLabel(currentRange);
+    loadChart();
+  }
+});
+
+async function loadChart() {
+  const box = document.querySelector('.chart-box');
+  if (selected.length < 2) {
+    if (chart) { chart.destroy(); chart = null; }
+    box.innerHTML = '<div class="empty-msg">비교할 지표 2개를 아래에서 선택하세요.</div>';
+    return;
+  }
+  box.innerHTML = '<canvas id="chart"></canvas>';
+
+  const [d1, d2] = await Promise.all([
+    fetchJson('/api/history?id=' + selected[0] + '&range=' + currentRange),
+    fetchJson('/api/history?id=' + selected[1] + '&range=' + currentRange)
+  ]);
+
+  if (d1.error || d2.error) {
+    box.innerHTML = '<div class="empty-msg">' + (d1.error || d2.error) + '</div>';
+    return;
+  }
+
+  const ctx = document.getElementById('chart').getContext('2d');
+  const labels = d1.points.map(p => p.date);
+
+  if (chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: d1.label,
+          data: d1.points.map(p => p.value),
+          borderColor: '#D4A24C',
+          backgroundColor: 'transparent',
+          yAxisID: 'y',
+          pointRadius: 0,
+          borderWidth: 2
+        },
+        {
+          label: d2.label,
+          data: d2.points.map(p => p.value),
+          borderColor: '#3AA1A1',
+          backgroundColor: 'transparent',
+          yAxisID: 'y1',
+          pointRadius: 0,
+          borderWidth: 2
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#EDEFF4' } }
+      },
+      scales: {
+        x: { ticks: { color: '#9AA5BD', maxTicksLimit: 10 }, grid: { color: '#233252' } },
+        y: { position: 'left', ticks: { color: '#D4A24C' }, grid: { color: '#233252' } },
+        y1: { position: 'right', ticks: { color: '#3AA1A1' }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+async function init() {
+  const latest = await fetchJson('/api/latest');
+  meta = latest.meta || [];
+  renderCategories();
+  loadChart();
+}
+
+init();
+</script>
+</body>
+</html>
