@@ -14,7 +14,10 @@ export default async function handler(req, res) {
     pce: 'PCEPI',           // PCE 물가지수
     unemployment: 'UNRATE', // 실업률
     treasury10y: 'DGS10',   // 미 국채 10년물 금리
-    gdp: 'GDPC1'            // 실질 GDP
+    gdp: 'GDPC1',           // 실질 GDP
+    vix: 'VIXCLS',          // CBOE 변동성지수(VIX), 하루 단위 갱신
+    wti: 'DCOILWTICO',      // WTI 원유 현물가격, 하루 단위 갱신
+    dollarIndex: 'DTWEXBGS' // 연준 무역가중 달러지수 (ICE의 DXY와는 다른 지수, 참고용)
   };
 
   try {
