@@ -53,6 +53,7 @@
     <div class="card"><div class="card-name">실업률</div><div class="card-value" id="us-unemployment">-</div></div>
     <div class="card"><div class="card-name">국채 10년물 금리</div><div class="card-value" id="us-treasury10y">-</div></div>
     <div class="card"><div class="card-name">실질 GDP</div><div class="card-value" id="us-gdp">-</div></div>
+    <div class="card"><div class="card-name">VIX (변동성지수)</div><div class="card-value" id="us-vix">-</div></div>
   </div>
 
   <div class="sec-title">한국 지표</div>
@@ -61,11 +62,10 @@
     <div class="card"><div class="card-name">원/달러 환율</div><div class="card-value" id="fx-usdkrw">-</div></div>
   </div>
 
-  <div class="sec-title">시장 심리 / 원자재</div>
+  <div class="sec-title">원자재 / 달러지수</div>
   <div class="grid" id="market-grid">
-    <div class="card"><div class="card-name">VIX (변동성지수)</div><div class="card-value" id="market-vix">-</div></div>
-    <div class="card"><div class="card-name">달러인덱스 (DXY)</div><div class="card-value" id="market-dxy">-</div></div>
-    <div class="card"><div class="card-name">WTI 유가</div><div class="card-value" id="market-wti">-</div></div>
+    <div class="card"><div class="card-name">달러지수 (FRED, 무역가중)</div><div class="card-value" id="us-dollarIndex">-</div></div>
+    <div class="card"><div class="card-name">WTI 유가</div><div class="card-value" id="us-wti">-</div></div>
   </div>
 </div>
 
@@ -91,15 +91,14 @@ async function loadAll() {
   btn.disabled = true;
   document.getElementById('status').textContent = '불러오는 중...';
 
-  const [us, kr, market, fx] = await Promise.all([
+  const [us, kr, fx] = await Promise.all([
     fetchJson('/api/us-indicators'),
     fetchJson('/api/kr-rate'),
-    fetchJson('/api/market'),
     fetchJson('/api/fx')
   ]);
 
   // 미국 지표
-  ['cpi','pce','unemployment','treasury10y','gdp'].forEach(k => {
+  ['cpi','pce','unemployment','treasury10y','gdp','vix','wti','dollarIndex'].forEach(k => {
     const d = us[k];
     if (!d || d.error) setCard('us-' + k, d?.error || '조회 실패', true);
     else setCard('us-' + k, d.value + ' (' + d.date + ')', false);
@@ -112,13 +111,6 @@ async function loadAll() {
   // 환율
   if (fx.error || !fx.usdkrw) setCard('fx-usdkrw', fx.error || '조회 실패', true);
   else setCard('fx-usdkrw', Number(fx.usdkrw).toFixed(2) + '원', false);
-
-  // 시장지표
-  ['vix','dxy','wti'].forEach(k => {
-    const d = market[k];
-    if (!d || d.error) setCard('market-' + k, d?.error || '조회 실패', true);
-    else setCard('market-' + k, d.value, false);
-  });
 
   document.getElementById('status').textContent = '마지막 갱신: ' + new Date().toLocaleTimeString('ko-KR');
   btn.disabled = false;
